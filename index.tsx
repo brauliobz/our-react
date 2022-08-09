@@ -1,7 +1,15 @@
 let React = {
     createElement: (tagOrComponent, props, ...children) => {
         if (typeof tagOrComponent === 'function') {
-            return tagOrComponent(props);
+            try {
+                return tagOrComponent(props);
+            } catch ({ promise, key }) {
+                promise().then(data => {
+                    promiseCache.set(key, data);
+                    rerender();
+                });
+                return { tag: "h1", props: { children: ["I AM LOADING"] } }
+            }
         }
         const tag = tagOrComponent;
         const element = {
@@ -32,15 +40,30 @@ const useState = (initialState) => {
 const App = () => {
     const [name, setName] = useState("person");
     const [count, setCount] = useState(0);
+    const dogUrl = createResource(() => fetch("https://dog.ceo/api/breeds/image/random")
+        .then(r => r.json())
+        .then(payload => payload.message)
+        .then(), 'dogPhoto');
     return (
         <div id="test" class="test_class">
             <p>Hello <em>{name}</em></p>
             <p>The count is {count}</p>
             <button onclick={() => setCount(count + 1)}>+</button>
+            <img src={dogUrl}></img>
             <input type="text" value={name} onchange={e => setName(e.target.value)}></input>
         </div>
     );
 };
+
+const promiseCache = new Map();
+
+const createResource = (promise, key) => {
+    if (promiseCache.has(key)) {
+        return promiseCache.get(key);
+    }
+
+    throw { promise, key }
+}
 
 const render = (reactElementOrStringOrNumber, container) => {
     if (['string', 'number'].includes(typeof reactElementOrStringOrNumber)) {
