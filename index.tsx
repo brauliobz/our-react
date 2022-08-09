@@ -1,5 +1,9 @@
 let React = {
-    createElement: (tag, props, ...children) => {
+    createElement: (tag_or_component, props, ...children) => {
+        if (typeof tag_or_component === 'function') {
+            return tag_or_component(props);
+        }
+        const tag = tag_or_component;
         const element = {
             tag,
             props: { ...props, children }
@@ -11,8 +15,8 @@ let React = {
     }
 };
 
-const a = (
-    <div class="test">
+const App = () => (
+    <div id="test" class="test_class">
         Hello
         <em>World</em>
     </div>
